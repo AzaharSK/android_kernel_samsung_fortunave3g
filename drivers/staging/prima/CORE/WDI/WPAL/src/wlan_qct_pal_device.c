@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -91,6 +91,12 @@
  * Preprocessor Definitions and Constants
  * -------------------------------------------------------------------------*/
 
+// address in the Host physical memory map
+#ifdef WCN_PRONTO
+#define WCNSS_BASE_ADDRESS 0xFB000000
+#else
+#define WCNSS_BASE_ADDRESS 0x03000000
+#endif
 /*----------------------------------------------------------------------------
  * Type Declarations
  * -------------------------------------------------------------------------*/
@@ -462,7 +468,7 @@ wpt_status wpalWriteRegister
 {
    /* if SSR is in progress, and WCNSS is not out of reset (re-init
     * not invoked), then do not access WCNSS registers */
-   if (NULL == gpEnv || wcnss_device_is_shutdown() ||
+   if (NULL == gpEnv ||
         (vos_is_logp_in_progress(VOS_MODULE_ID_WDI, NULL) &&
             !vos_is_reinit_in_progress(VOS_MODULE_ID_WDI, NULL))) {
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
@@ -470,8 +476,6 @@ wpt_status wpalWriteRegister
                  __func__);
       return eWLAN_PAL_STATUS_E_INVAL;
    }
-
-   address = (address | gpEnv->wcnss_memory->start);
 
    if ((address < gpEnv->wcnss_memory->start) ||
        (address > gpEnv->wcnss_memory->end)) {
@@ -490,7 +494,7 @@ wpt_status wpalWriteRegister
    }
 
    wmb();
-   writel_relaxed(data, gpEnv->mmio + (address - gpEnv->wcnss_memory->start));
+   writel_relaxed(data, gpEnv->mmio + (address - WCNSS_BASE_ADDRESS));
 
    return eWLAN_PAL_STATUS_SUCCESS;
 }
@@ -512,7 +516,7 @@ wpt_status wpalReadRegister
 {
    /* if SSR is in progress, and WCNSS is not out of reset (re-init
     * not invoked), then do not access WCNSS registers */
-   if (NULL == gpEnv || wcnss_device_is_shutdown() ||
+   if (NULL == gpEnv ||
         (vos_is_logp_in_progress(VOS_MODULE_ID_WDI, NULL) &&
             !vos_is_reinit_in_progress(VOS_MODULE_ID_WDI, NULL))) {
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
@@ -520,8 +524,6 @@ wpt_status wpalReadRegister
                  __func__);
       return eWLAN_PAL_STATUS_E_INVAL;
    }
-
-   address = (address | gpEnv->wcnss_memory->start);
 
    if ((address < gpEnv->wcnss_memory->start) ||
        (address > gpEnv->wcnss_memory->end)) {
@@ -539,7 +541,7 @@ wpt_status wpalReadRegister
       return eWLAN_PAL_STATUS_E_INVAL;
    }
 
-   *data = readl_relaxed(gpEnv->mmio + (address - gpEnv->wcnss_memory->start));
+   *data = readl_relaxed(gpEnv->mmio + (address - WCNSS_BASE_ADDRESS));
    rmb();
 
    return eWLAN_PAL_STATUS_SUCCESS;
@@ -565,7 +567,7 @@ wpt_status wpalWriteDeviceMemory
 {
    /* if SSR is in progress, and WCNSS is not out of reset (re-init
     * not invoked), then do not access WCNSS registers */
-   if (NULL == gpEnv || wcnss_device_is_shutdown() ||
+   if (NULL == gpEnv ||
         (vos_is_logp_in_progress(VOS_MODULE_ID_WDI, NULL) &&
             !vos_is_reinit_in_progress(VOS_MODULE_ID_WDI, NULL))) {
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
@@ -573,8 +575,6 @@ wpt_status wpalWriteDeviceMemory
                  __func__);
       return eWLAN_PAL_STATUS_E_INVAL;
    }
-
-   address = (address | gpEnv->wcnss_memory->start);
 
    if ((address < gpEnv->wcnss_memory->start) ||
        ((address + len) > gpEnv->wcnss_memory->end)) {
@@ -585,8 +585,7 @@ wpt_status wpalWriteDeviceMemory
       return eWLAN_PAL_STATUS_E_INVAL;
    }
 
-   vos_mem_copy(gpEnv->mmio + (address - gpEnv->wcnss_memory->start),
-                                                            s_buffer, len);
+   memcpy(gpEnv->mmio + (address - WCNSS_BASE_ADDRESS), s_buffer, len);
    wmb();
 
    return eWLAN_PAL_STATUS_SUCCESS;
@@ -612,7 +611,7 @@ wpt_status wpalReadDeviceMemory
 {
    /* if SSR is in progress, and WCNSS is not out of reset (re-init
     * not invoked), then do not access WCNSS registers */
-   if (NULL == gpEnv || wcnss_device_is_shutdown() ||
+   if (NULL == gpEnv ||
         (vos_is_logp_in_progress(VOS_MODULE_ID_WDI, NULL) &&
             !vos_is_reinit_in_progress(VOS_MODULE_ID_WDI, NULL))) {
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
@@ -620,8 +619,6 @@ wpt_status wpalReadDeviceMemory
                  __func__);
       return eWLAN_PAL_STATUS_E_INVAL;
    }
-
-   address = (address | gpEnv->wcnss_memory->start);
 
    if ((address < gpEnv->wcnss_memory->start) ||
        ((address + len) > gpEnv->wcnss_memory->end)) {
@@ -632,8 +629,7 @@ wpt_status wpalReadDeviceMemory
       return eWLAN_PAL_STATUS_E_INVAL;
    }
 
-   vos_mem_copy(d_buffer,
-                   gpEnv->mmio + (address - gpEnv->wcnss_memory->start), len);
+   memcpy(d_buffer, gpEnv->mmio + (address - WCNSS_BASE_ADDRESS), len);
    rmb();
 
    return eWLAN_PAL_STATUS_SUCCESS;
@@ -718,7 +714,6 @@ wpt_status wpalDeviceInit
       exclusive access to that memory */
 
    gpEnv->mmio = ioremap(wcnss_memory->start, resource_size(wcnss_memory));
-
    if (NULL == gpEnv->mmio) {
       WPAL_TRACE(eWLAN_MODULE_DAL_DATA, eWLAN_PAL_TRACE_LEVEL_ERROR,
                  "%s: memory remap failure",
