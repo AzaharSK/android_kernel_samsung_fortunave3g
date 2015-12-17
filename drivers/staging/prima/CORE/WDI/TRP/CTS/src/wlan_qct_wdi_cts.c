@@ -99,7 +99,7 @@
 #include "wlan_qct_wdi.h"
 #include "wlan_qct_wdi_i.h"
 #ifdef CONFIG_ANDROID
-#include <mach/msm_smd.h>
+#include <soc/qcom/smd.h>
 #include <linux/delay.h>
 #else
 #include "msm_smd.h"
