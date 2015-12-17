@@ -77,7 +77,7 @@
 #include <linux/irqreturn.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
-#include <mach/msm_smsm.h>
+#include <soc/qcom/smsm.h>
 #include "wlan_qct_pal_api.h"
 #include "wlan_qct_pal_device.h"
 #include "wlan_hdd_main.h"
