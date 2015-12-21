@@ -1326,7 +1326,7 @@ static int mdss_panel_parse_dt(struct device_node *np,
 				__func__);
 		pinfo->pdest = DISPLAY_1;
 	}
-#if defined(CONFIG_MACH_FORTUNA3G_EUR)
+#if defined(CONFIG_MACH_FORTUNAVE3G_EUR)
 	rc = of_property_read_u32(np, "qcom,mdss-dsi-h-front-porch-3g", &tmp);
 	pinfo->lcdc.h_front_porch = (!rc ? tmp : 6);
 	rc = of_property_read_u32(np, "qcom,mdss-dsi-h-back-porch-3g", &tmp);
